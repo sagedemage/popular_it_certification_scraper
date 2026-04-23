@@ -33,7 +33,9 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
         results_element_text = results_element.get_text()
         results_items = results_element_text.split(" ")
         for i in range(len(results_items)-1):
-            if results_items[i+1].lower() == "results":
+            result_item = results_items[i+1].lower()
+            result_item = result_item.replace("\n", "")
+            if result_item == "results":
                 results_s = results_items[i]
                 results_s = results_s.strip()
                 results_s = results_s.replace(",", "")
@@ -54,23 +56,34 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
             job_data_found = True
             logger.info(f"Added results number for {key} from {company_name}")
         else:
-            # Check 3: Does the website contain the text "jobs matched".
-            # If so, get the number of jobs from that tag.
-            div_elements = soup.find_all("div")
-            for div_element in div_elements:
-                if div_element != None:
-                    text = div_element.get_text()
-                    if "jobs matched" in text:
-                        jobs_num_element = div_element.find("span", class_="SWhIm")
-                        if jobs_num_element != None:
-                            jobs_num_s = jobs_num_element.get_text()
-                            jobs_num_s = jobs_num_s.strip()
-                            jobs_num_s = jobs_num_s.replace(",", "")
-                            jobs_num = int(jobs_num_s)
-                            data[key].append(jobs_num)
-                            job_data_found = True
-                            logger.info(f"Added results number for {key} from {company_name}")
-                            break
+            # Check 3: Does the website contain the element of class "result-count"
+            results_element = soup.find(class_="result-count")
+            if results_element != None:
+                results_s = results_element.get_text()
+                results_s = results_s.strip()
+                results_s = results_s.replace(",", "")
+                results = int(results_s)
+                data[key].append(results)
+                job_data_found = True
+                logger.info(f"Added results number for {key} from {company_name}")
+            else:
+                # Check 4: Does the website contain the text "jobs matched".
+                # If so, get the number of jobs from that tag.
+                div_elements = soup.find_all("div")
+                for div_element in div_elements:
+                    if div_element != None:
+                        text = div_element.get_text()
+                        if "jobs matched" in text:
+                            jobs_num_element = div_element.find("span", class_="SWhIm")
+                            if jobs_num_element != None:
+                                jobs_num_s = jobs_num_element.get_text()
+                                jobs_num_s = jobs_num_s.strip()
+                                jobs_num_s = jobs_num_s.replace(",", "")
+                                jobs_num = int(jobs_num_s)
+                                data[key].append(jobs_num)
+                                job_data_found = True
+                                logger.info(f"Added results number for {key} from {company_name}")
+                                break
     if job_data_found == False:
         data_result = DataResult(None, False)
         return data_result
@@ -134,6 +147,14 @@ def main():
 
         url = f"https://www.gdit.com/careers/search/?q={search_query}"
         url_info = UrlInfo(url, "GDIT")
+        urls_by_cert[key].append(url_info)
+
+        url = f"https://jobs.baesystems.com/global/en/search-results?keywords={search_query}"
+        url_info = UrlInfo(url, "BAE Systems")
+        urls_by_cert[key].append(url_info)
+
+        url = f"https://careers.leidos.com/search/jobs?q={search_query}"
+        url_info = UrlInfo(url, "Leidos")
         urls_by_cert[key].append(url_info)
 
         url = f"https://jobs.cvshealth.com/us/en/search-results?keywords={search_query}"
