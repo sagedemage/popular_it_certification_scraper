@@ -10,11 +10,72 @@ import sys
 from dataclasses import dataclass
 from typing import Dict, List
 import logging
+import requests
 
 @dataclass
 class UrlInfo:
     url: str
     company_name: str
+
+@dataclass
+class DataResult:
+    data: Dict[str, List[str]]
+    job_data_found: bool
+
+def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, logger: logging.Logger, company_name: str) -> DataResult:
+    job_data_found = False
+    soup = BeautifulSoup(html_content, "lxml")
+
+    # Check 1: Does the website contain the text "{number} results"
+    pattern = re.compile(r'\d results', re.IGNORECASE)
+    results_element = soup.find(string=pattern)
+    if results_element != None:
+        results_element_text = results_element.get_text()
+        results_items = results_element_text.split(" ")
+        for i in range(len(results_items)-1):
+            if results_items[i+1].lower() == "results":
+                results_s = results_items[i]
+                results_s = results_s.strip()
+                results_s = results_s.replace(",", "")
+                results = int(results_s)
+                data[key].append(results)
+                job_data_found = True
+                logger.info(f"Added results number for {key} from {company_name}")
+                break
+    else:
+        # Check 2: Does the website contain the element of class "total-jobs"
+        results_element = soup.find(class_="total-jobs")
+        if results_element != None:
+            results_s = results_element.get_text()
+            results_s = results_s.strip()
+            results_s = results_s.replace(",", "")
+            results = int(results_s)
+            data[key].append(results)
+            job_data_found = True
+            logger.info(f"Added results number for {key} from {company_name}")
+        else:
+            # Check 3: Does the website contain the text "jobs matched".
+            # If so, get the number of jobs from that tag.
+            div_elements = soup.find_all("div")
+            for div_element in div_elements:
+                if div_element != None:
+                    text = div_element.get_text()
+                    if "jobs matched" in text:
+                        jobs_num_element = div_element.find("span", class_="SWhIm")
+                        if jobs_num_element != None:
+                            jobs_num_s = jobs_num_element.get_text()
+                            jobs_num_s = jobs_num_s.strip()
+                            jobs_num_s = jobs_num_s.replace(",", "")
+                            jobs_num = int(jobs_num_s)
+                            data[key].append(jobs_num)
+                            job_data_found = True
+                            logger.info(f"Added results number for {key} from {company_name}")
+                            break
+    if job_data_found == False:
+        data_result = DataResult(None, False)
+        return data_result
+    data_result = DataResult(data, True)
+    return data_result
 
 def main():
     options = webdriver.ChromeOptions()
@@ -53,7 +114,7 @@ def main():
 
     certs = ["Comptia Network+", "Comptia Security+", "CCNA", "Comptia Linux+", "Comptia Server+"]
 
-    data = {}
+    data: Dict[str, List[str]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
 
     for cert in certs:
@@ -97,65 +158,45 @@ def main():
     for key in urls_by_cert.keys():
         urls = urls_by_cert[key]
         for url_info in urls:
-            job_data_found = False
             url = url_info.url
             company_name = url_info.company_name
-            driver.get(url)
+            using_requests_api = True
 
-            time.sleep(20)
+            headers = {"User-Agent": user_agent, "Accept-Encoding": "gzip", "Accept-Language": "en, en-US;q=0.9, en-GB;q=0.8, *;q=0.5"}
+            time.sleep(2)
+            r = requests.get(url, headers=headers)
+            status_code = r.status_code
+            html_content = ""
+            if status_code == 200:
+                html_content = r.text
+            if status_code == 403:
+                # Bypass bot detection
+                using_requests_api = False
+                driver.get(url)
+
+                time.sleep(20)
         
-            html_content = driver.page_source
+                html_content = driver.page_source
 
-            soup = BeautifulSoup(html_content, "lxml")
-
-            # Check 1: Does the website contain the text "{number} results"
-            pattern = re.compile(r'\d results', re.IGNORECASE)
-            results_element = soup.find(string=pattern)
-            if results_element != None:
-                results_element_text = results_element.get_text()
-                results_items = results_element_text.split(" ")
-                for i in range(len(results_items)-1):
-                    if results_items[i+1].lower() == "results":
-                        results_s = results_items[i]
-                        results_s = results_s.strip()
-                        results_s = results_s.replace(",", "")
-                        results = int(results_s)
-                        data[key].append(results)
-                        job_data_found = True
-                        logger.info(f"Added results number for {key} from {company_name}")
-                        break
+            data_result = scrap_html_content(html_content, data, key, logger, company_name)
+            if data_result.job_data_found == True:
+                data = data_result.data
             else:
-                # Check 2: Does the website contain the element of class "total-jobs"
-                results_element = soup.find(class_="total-jobs")
-                if results_element != None:
-                    results_s = results_element.get_text()
-                    results_s = results_s.strip()
-                    results_s = results_s.replace(",", "")
-                    results = int(results_s)
-                    data[key].append(results)
-                    job_data_found = True
-                    logger.info(f"Added results number for {key} from {company_name}")
-                else:
-                    # Check 3: Does the website contain the text "jobs matched".
-                    # If so, get the number of jobs from that tag.
-                    div_elements = soup.find_all("div")
-                    for div_element in div_elements:
-                        if div_element != None:
-                            text = div_element.get_text()
-                            if "jobs matched" in text:
-                                jobs_num_element = div_element.find("span", class_="SWhIm")
-                                if jobs_num_element != None:
-                                    jobs_num_s = jobs_num_element.get_text()
-                                    jobs_num_s = jobs_num_s.strip()
-                                    jobs_num_s = jobs_num_s.replace(",", "")
-                                    jobs_num = int(jobs_num_s)
-                                    data[key].append(jobs_num)
-                                    job_data_found = True
-                                    logger.info(f"Added results number for {key} from {company_name}")
-                                    break
-            if job_data_found == False:
-                logger.error(f"Unable to get the results number from {url}")
-                sys.exit(1)
+                if using_requests_api == True:
+                    # Get dynamic HTML content generated from JavaScript
+                    using_requests_api = False
+                    driver.get(url)
+
+                    time.sleep(20)
+
+                    html_content = driver.page_source
+
+                    data_result = scrap_html_content(html_content, data, key, logger, company_name)
+                    if data_result.job_data_found == True:
+                        data = data_result.data
+                    elif data_result.job_data_found == False and using_requests_api == False:
+                        logger.error(f"Unable to get the results number from {url}")
+                        sys.exit(1)
     
     driver.quit()
 
