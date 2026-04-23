@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+nodriver = "*"
+beautifulsoup4 = "*"
+selenium = "*"
+lxml = "*"
+pandas = "*"
+standard-distutils = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.14"
