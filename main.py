@@ -10,7 +10,6 @@ import sys
 from dataclasses import dataclass
 from typing import Dict, List
 import logging
-import requests
 
 @dataclass
 class UrlInfo:
@@ -67,23 +66,44 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                 job_data_found = True
                 logger.info(f"Added results number for {key} from {company_name}")
             else:
-                # Check 4: Does the website contain the text "jobs matched".
-                # If so, get the number of jobs from that tag.
-                div_elements = soup.find_all("div")
-                for div_element in div_elements:
-                    if div_element != None:
-                        text = div_element.get_text()
-                        if "jobs matched" in text:
-                            jobs_num_element = div_element.find("span", class_="SWhIm")
-                            if jobs_num_element != None:
-                                jobs_num_s = jobs_num_element.get_text()
-                                jobs_num_s = jobs_num_s.strip()
-                                jobs_num_s = jobs_num_s.replace(",", "")
-                                jobs_num = int(jobs_num_s)
-                                data[key].append(jobs_num)
-                                job_data_found = True
-                                logger.info(f"Added results number for {key} from {company_name}")
-                                break
+                # Check 4: Does the website contain the element of class "job-count"
+                results_element = soup.find(class_="job-count")
+                if results_element != None:
+                    jobs_num_element = results_element.find("span", class_="sr-only")
+                    if jobs_num_element != None:
+                        jobs_num_s = jobs_num_element.get_text()
+                        jobs_num_s = jobs_num_s.removesuffix("jobs")
+                        jobs_num_s = jobs_num_s.strip()
+                        jobs_num_s = jobs_num_s.replace(",", "")
+                        jobs_num = int(jobs_num_s)
+                        data[key].append(jobs_num)
+                        job_data_found = True
+                        logger.info(f"Added results number for {key} from {company_name}")
+                else:
+                    # Check for no search results
+                    search_empty_element = soup.find("div", class_="search-empty")
+                    if search_empty_element != None:
+                        data[key].append(0)
+                        job_data_found = True
+                        logger.info(f"Added results number for {key} from {company_name}")
+                    else:
+                        # Check 5: Does the website contain the text "jobs matched".
+                        # If so, get the number of jobs from that tag.
+                        div_elements = soup.find_all("div")
+                        for div_element in div_elements:
+                            if div_element != None:
+                                text = div_element.get_text()
+                                if "jobs matched" in text:
+                                    jobs_num_element = div_element.find("span", class_="SWhIm")
+                                    if jobs_num_element != None:
+                                        jobs_num_s = jobs_num_element.get_text()
+                                        jobs_num_s = jobs_num_s.strip()
+                                        jobs_num_s = jobs_num_s.replace(",", "")
+                                        jobs_num = int(jobs_num_s)
+                                        data[key].append(jobs_num)
+                                        job_data_found = True
+                                        logger.info(f"Added results number for {key} from {company_name}")
+                                        break
     if job_data_found == False:
         data_result = DataResult(None, False)
         return data_result
@@ -173,6 +193,10 @@ def main():
         url_info = UrlInfo(url, "Google")
         urls_by_cert[key].append(url_info)
 
+        url = f"https://www.amazon.jobs/en/search?base_query={search_query}"
+        url_info = UrlInfo(url, "Amazon")
+        urls_by_cert[key].append(url_info)
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
@@ -181,43 +205,21 @@ def main():
         for url_info in urls:
             url = url_info.url
             company_name = url_info.company_name
-            using_requests_api = True
 
-            headers = {"User-Agent": user_agent, "Accept-Encoding": "gzip", "Accept-Language": "en, en-US;q=0.9, en-GB;q=0.8, *;q=0.5"}
-            time.sleep(2)
-            r = requests.get(url, headers=headers)
-            status_code = r.status_code
-            html_content = ""
-            if status_code == 200:
-                html_content = r.text
-            if status_code == 403:
-                # Bypass bot detection
-                using_requests_api = False
-                driver.get(url)
+            # Note: Selenium is great for getting dynamic HTML content generated from JavaScript
+            driver.get(url)
 
-                time.sleep(20)
+            time.sleep(20)
         
-                html_content = driver.page_source
+            html_content = driver.page_source
 
             data_result = scrap_html_content(html_content, data, key, logger, company_name)
             if data_result.job_data_found == True:
                 data = data_result.data
             else:
-                if using_requests_api == True:
-                    # Get dynamic HTML content generated from JavaScript
-                    using_requests_api = False
-                    driver.get(url)
-
-                    time.sleep(20)
-
-                    html_content = driver.page_source
-
-                    data_result = scrap_html_content(html_content, data, key, logger, company_name)
-                    if data_result.job_data_found == True:
-                        data = data_result.data
-                    elif data_result.job_data_found == False and using_requests_api == False:
-                        logger.error(f"Unable to get the results number from {url}")
-                        sys.exit(1)
+                logger.error(f"Unable to get the results number from {url}")
+                driver.quit()
+                sys.exit(1)
     
     driver.quit()
 

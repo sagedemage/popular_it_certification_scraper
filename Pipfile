@@ -10,7 +10,6 @@ selenium = "*"
 lxml = "*"
 pandas = "*"
 standard-distutils = "*"
-requests = "*"
 
 [dev-packages]
 
