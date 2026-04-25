@@ -21,6 +21,13 @@ class DataResult:
     data: Dict[str, List[str]]
     job_data_found: bool
 
+def remove_non_num_chars(jobs_num_s: str):
+    jobs_num_s = jobs_num_s.removesuffix("jobs")
+    jobs_num_s = jobs_num_s.replace(",", "")
+    jobs_num_s = jobs_num_s.replace("+", "")
+    jobs_num_s = jobs_num_s.strip()
+    return jobs_num_s
+
 def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, logger: logging.Logger, company_name: str) -> DataResult:
     job_data_found = False
     soup = BeautifulSoup(html_content, "lxml")
@@ -36,8 +43,8 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
             result_item = result_item.replace("\n", "")
             if result_item == "results":
                 results_s = results_items[i]
-                results_s = results_s.strip()
-                results_s = results_s.replace(",", "")
+                # Remove non number chars
+                results_s = remove_non_num_chars(results_s)
                 results = int(results_s)
                 data[key].append(results)
                 job_data_found = True
@@ -48,8 +55,8 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
         results_element = soup.find(class_="total-jobs")
         if results_element != None:
             results_s = results_element.get_text()
-            results_s = results_s.strip()
-            results_s = results_s.replace(",", "")
+            # Remove non number chars
+            results_s = remove_non_num_chars(results_s)
             results = int(results_s)
             data[key].append(results)
             job_data_found = True
@@ -59,8 +66,8 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
             results_element = soup.find(class_="result-count")
             if results_element != None:
                 results_s = results_element.get_text()
-                results_s = results_s.strip()
-                results_s = results_s.replace(",", "")
+                # Remove non number chars
+                results_s = remove_non_num_chars(results_s)
                 results = int(results_s)
                 data[key].append(results)
                 job_data_found = True
@@ -70,9 +77,8 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                 results_element = soup.find(class_="job-count")
                 if results_element != None:
                     jobs_num_s = results_element.get_text()
-                    jobs_num_s = jobs_num_s.removesuffix("jobs")
-                    jobs_num_s = jobs_num_s.strip()
-                    jobs_num_s = jobs_num_s.replace(",", "")
+                    # Remove non number chars
+                    jobs_num_s = remove_non_num_chars(jobs_num_s)
                     jobs_num_l = list(jobs_num_s)
                     remove = False
                     for i in range(len(jobs_num_l)):
@@ -100,9 +106,8 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                         results_element = soup.find("b", {"data-testid": "job-count"})
                         if results_element != None:
                             jobs_num_s = results_element.get_text()
-                            jobs_num_s = jobs_num_s.removesuffix("jobs")
-                            jobs_num_s = jobs_num_s.strip()
-                            jobs_num_s = jobs_num_s.replace(",", "")
+                            # Remove non number chars
+                            jobs_num_s = remove_non_num_chars(jobs_num_s)
                             jobs_num = int(jobs_num_s)
                             data[key].append(jobs_num)
                             job_data_found = True
@@ -118,8 +123,8 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                                         jobs_num_element = div_element.find("span", class_="SWhIm")
                                         if jobs_num_element != None:
                                             jobs_num_s = jobs_num_element.get_text()
-                                            jobs_num_s = jobs_num_s.strip()
-                                            jobs_num_s = jobs_num_s.replace(",", "")
+                                            # Remove non number chars
+                                            jobs_num_s = remove_non_num_chars(jobs_num_s)
                                             jobs_num = int(jobs_num_s)
                                             data[key].append(jobs_num)
                                             job_data_found = True
@@ -184,6 +189,7 @@ def main():
     for key in urls_by_cert.keys():
         search_query = quote(key)
 
+        # URLs of Defense Companies
         url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query}"
         url_info = UrlInfo(url, "RTX")
         urls_by_cert[key].append(url_info)
@@ -192,18 +198,21 @@ def main():
         url_info = UrlInfo(url, "Lockheed Martin")
         urls_by_cert[key].append(url_info)
 
-        url = f"https://www.gdit.com/careers/search/?q={search_query}"
-        url_info = UrlInfo(url, "GDIT")
-        urls_by_cert[key].append(url_info)
-
         url = f"https://jobs.baesystems.com/global/en/search-results?keywords={search_query}"
         url_info = UrlInfo(url, "BAE Systems")
         urls_by_cert[key].append(url_info)
 
-        url = f"https://careers.leidos.com/search/jobs?q={search_query}"
-        url_info = UrlInfo(url, "Leidos")
-        urls_by_cert[key].append(url_info)
+        # Remove
+        #url = f"https://www.gdit.com/careers/search/?q={search_query}"
+        #url_info = UrlInfo(url, "GDIT")
+        #urls_by_cert[key].append(url_info)
 
+        # Remove
+        #url = f"https://careers.leidos.com/search/jobs?q={search_query}"
+        #url_info = UrlInfo(url, "Leidos")
+        #urls_by_cert[key].append(url_info)
+
+        # URLs of Healthcare Companies
         url = f"https://jobs.cvshealth.com/us/en/search-results?keywords={search_query}"
         url_info = UrlInfo(url, "CVS Health")
         urls_by_cert[key].append(url_info)
@@ -216,6 +225,7 @@ def main():
         url_info = UrlInfo(url, "McKesson")
         urls_by_cert[key].append(url_info)
 
+        # URLs of Technology Companies
         url = f"https://www.google.com/about/careers/applications/jobs/results?q={search_query}"
         url_info = UrlInfo(url, "Google")
         urls_by_cert[key].append(url_info)
