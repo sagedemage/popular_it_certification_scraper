@@ -202,16 +202,6 @@ def main():
         url_info = UrlInfo(url, "BAE Systems")
         urls_by_cert[key].append(url_info)
 
-        # Remove
-        #url = f"https://www.gdit.com/careers/search/?q={search_query}"
-        #url_info = UrlInfo(url, "GDIT")
-        #urls_by_cert[key].append(url_info)
-
-        # Remove
-        #url = f"https://careers.leidos.com/search/jobs?q={search_query}"
-        #url_info = UrlInfo(url, "Leidos")
-        #urls_by_cert[key].append(url_info)
-
         # URLs of Healthcare Companies
         url = f"https://jobs.cvshealth.com/us/en/search-results?keywords={search_query}"
         url_info = UrlInfo(url, "CVS Health")
