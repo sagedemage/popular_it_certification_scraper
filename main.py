@@ -69,16 +69,25 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                 # Check 4: Does the website contain the element of class "job-count"
                 results_element = soup.find(class_="job-count")
                 if results_element != None:
-                    jobs_num_element = results_element.find("span", class_="sr-only")
-                    if jobs_num_element != None:
-                        jobs_num_s = jobs_num_element.get_text()
-                        jobs_num_s = jobs_num_s.removesuffix("jobs")
-                        jobs_num_s = jobs_num_s.strip()
-                        jobs_num_s = jobs_num_s.replace(",", "")
-                        jobs_num = int(jobs_num_s)
-                        data[key].append(jobs_num)
-                        job_data_found = True
-                        logger.info(f"Added results number for {key} from {company_name}")
+                    jobs_num_s = results_element.get_text()
+                    jobs_num_s = jobs_num_s.removesuffix("jobs")
+                    jobs_num_s = jobs_num_s.strip()
+                    jobs_num_s = jobs_num_s.replace(",", "")
+                    jobs_num_l = list(jobs_num_s)
+                    remove = False
+                    for i in range(len(jobs_num_l)):
+                        if jobs_num_l[i] == "(":
+                            remove = True
+                        elif jobs_num_l[i] == ")":
+                            remove = False
+                            jobs_num_l[i] = ""
+                        if remove == True:
+                            jobs_num_l[i] = ""
+                    jobs_num_s = "".join(jobs_num_l)
+                    jobs_num = int(jobs_num_s)
+                    data[key].append(jobs_num)
+                    job_data_found = True
+                    logger.info(f"Added results number for {key} from {company_name}")
                 else:
                     # Check for no search results
                     search_empty_element = soup.find("div", class_="search-empty")
@@ -87,23 +96,35 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                         job_data_found = True
                         logger.info(f"Added results number for {key} from {company_name}")
                     else:
-                        # Check 5: Does the website contain the text "jobs matched".
-                        # If so, get the number of jobs from that tag.
-                        div_elements = soup.find_all("div")
-                        for div_element in div_elements:
-                            if div_element != None:
-                                text = div_element.get_text()
-                                if "jobs matched" in text:
-                                    jobs_num_element = div_element.find("span", class_="SWhIm")
-                                    if jobs_num_element != None:
-                                        jobs_num_s = jobs_num_element.get_text()
-                                        jobs_num_s = jobs_num_s.strip()
-                                        jobs_num_s = jobs_num_s.replace(",", "")
-                                        jobs_num = int(jobs_num_s)
-                                        data[key].append(jobs_num)
-                                        job_data_found = True
-                                        logger.info(f"Added results number for {key} from {company_name}")
-                                        break
+                        # Check 5: Does the website contain the element of attribute, data-testid, that is equal to "job-count"
+                        results_element = soup.find("b", {"data-testid": "job-count"})
+                        if results_element != None:
+                            jobs_num_s = results_element.get_text()
+                            jobs_num_s = jobs_num_s.removesuffix("jobs")
+                            jobs_num_s = jobs_num_s.strip()
+                            jobs_num_s = jobs_num_s.replace(",", "")
+                            jobs_num = int(jobs_num_s)
+                            data[key].append(jobs_num)
+                            job_data_found = True
+                            logger.info(f"Added results number for {key} from {company_name}")
+                        else:
+                            # Check 6: Does the website contain the text "jobs matched" or "job matched".
+                            # If so, get the number of jobs from that tag.
+                            div_elements = soup.find_all("div")
+                            for div_element in div_elements:
+                                if div_element != None:
+                                    text = div_element.get_text()
+                                    if "jobs matched" in text or "job matched" in text:
+                                        jobs_num_element = div_element.find("span", class_="SWhIm")
+                                        if jobs_num_element != None:
+                                            jobs_num_s = jobs_num_element.get_text()
+                                            jobs_num_s = jobs_num_s.strip()
+                                            jobs_num_s = jobs_num_s.replace(",", "")
+                                            jobs_num = int(jobs_num_s)
+                                            data[key].append(jobs_num)
+                                            job_data_found = True
+                                            logger.info(f"Added results number for {key} from {company_name}")
+                                            break
     if job_data_found == False:
         data_result = DataResult(None, False)
         return data_result
@@ -145,7 +166,13 @@ def main():
         "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
     })
 
-    certs = ["Comptia Network+", "Comptia Security+", "CCNA", "Comptia Linux+", "Comptia Server+"]
+    certs = [
+        "Comptia Network+",
+        "Comptia Security+",
+        "CCNA",
+        "Comptia Linux+",
+        "Comptia Server+"
+        ]
 
     data: Dict[str, List[str]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
@@ -156,7 +183,7 @@ def main():
 
     for key in urls_by_cert.keys():
         search_query = quote(key)
-        
+
         url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query}"
         url_info = UrlInfo(url, "RTX")
         urls_by_cert[key].append(url_info)
@@ -195,6 +222,10 @@ def main():
 
         url = f"https://www.amazon.jobs/en/search?base_query={search_query}"
         url_info = UrlInfo(url, "Amazon")
+        urls_by_cert[key].append(url_info)
+
+        url = f"https://apply.careers.microsoft.com/careers?query={search_query}"
+        url_info = UrlInfo(url, "Microsoft")
         urls_by_cert[key].append(url_info)
 
     logging.basicConfig(level=logging.INFO)
