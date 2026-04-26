@@ -73,32 +73,33 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                 job_data_found = True
                 logger.info(f"Added results number for {key} from {company_name}")
             else:
-                # Check 4: Does the website contain the element of class "job-count"
-                results_element = soup.find(class_="job-count")
-                if results_element != None:
-                    jobs_num_s = results_element.get_text()
-                    # Remove non number chars
-                    jobs_num_s = remove_non_num_chars(jobs_num_s)
-                    jobs_num_l = list(jobs_num_s)
-                    remove = False
-                    for i in range(len(jobs_num_l)):
-                        if jobs_num_l[i] == "(":
-                            remove = True
-                        elif jobs_num_l[i] == ")":
-                            remove = False
-                            jobs_num_l[i] = ""
-                        if remove == True:
-                            jobs_num_l[i] = ""
-                    jobs_num_s = "".join(jobs_num_l)
-                    jobs_num = int(jobs_num_s)
-                    data[key].append(jobs_num)
+                # Check for no search results
+                search_empty_element = soup.find("div", class_="search-empty")
+                no_results_element = soup.find("div", {"ph-page-state": "no-results"})
+                if search_empty_element != None or no_results_element != None:
+                    data[key].append(0)
                     job_data_found = True
                     logger.info(f"Added results number for {key} from {company_name}")
                 else:
-                    # Check for no search results
-                    search_empty_element = soup.find("div", class_="search-empty")
-                    if search_empty_element != None:
-                        data[key].append(0)
+                    # Check 4: Does the website contain the element of class "job-count"
+                    results_element = soup.find(class_="job-count")
+                    if results_element != None:
+                        jobs_num_s = results_element.get_text()
+                        # Remove non number chars
+                        jobs_num_s = remove_non_num_chars(jobs_num_s)
+                        jobs_num_l = list(jobs_num_s)
+                        remove = False
+                        for i in range(len(jobs_num_l)):
+                            if jobs_num_l[i] == "(":
+                                remove = True
+                            elif jobs_num_l[i] == ")":
+                                remove = False
+                                jobs_num_l[i] = ""
+                            if remove == True:
+                                jobs_num_l[i] = ""
+                        jobs_num_s = "".join(jobs_num_l)
+                        jobs_num = int(jobs_num_s)
+                        data[key].append(jobs_num)
                         job_data_found = True
                         logger.info(f"Added results number for {key} from {company_name}")
                     else:
@@ -207,12 +208,12 @@ def main():
         url_info = UrlInfo(url, "CVS Health")
         urls_by_cert[key].append(url_info)
 
-        url = f"https://jobs.walgreens.com/en/search-jobs/{search_query}/1242/1"
-        url_info = UrlInfo(url, "Walgreens")
-        urls_by_cert[key].append(url_info)
-
         url = f"https://careers.mckesson.com/en/search-jobs/{search_query}"
         url_info = UrlInfo(url, "McKesson")
+        urls_by_cert[key].append(url_info)
+
+        url = f"https://jobs.thecignagroup.com/us/en/search-results?keywords={search_query}"
+        url_info = UrlInfo(url, "The Cigna Group")
         urls_by_cert[key].append(url_info)
 
         # URLs of Technology Companies
