@@ -22,6 +22,7 @@ class DataResult:
     job_data_found: bool
 
 def remove_non_num_chars(jobs_num_s: str):
+    """Remove non number characters"""
     jobs_num_s = jobs_num_s.removesuffix("jobs")
     jobs_num_s = jobs_num_s.replace(",", "")
     jobs_num_s = jobs_num_s.replace("+", "")
@@ -29,6 +30,7 @@ def remove_non_num_chars(jobs_num_s: str):
     return jobs_num_s
 
 def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, logger: logging.Logger, company_name: str) -> DataResult:
+    """Scrap HTML content for jobs data"""
     job_data_found = False
     soup = BeautifulSoup(html_content, "lxml")
 
@@ -43,7 +45,6 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
             result_item = result_item.replace("\n", "")
             if result_item == "results":
                 results_s = results_items[i]
-                # Remove non number chars
                 results_s = remove_non_num_chars(results_s)
                 results = int(results_s)
                 data[key].append(results)
@@ -55,7 +56,6 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
         results_element = soup.find(class_="total-jobs")
         if results_element != None:
             results_s = results_element.get_text()
-            # Remove non number chars
             results_s = remove_non_num_chars(results_s)
             results = int(results_s)
             data[key].append(results)
@@ -66,7 +66,6 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
             results_element = soup.find(class_="result-count")
             if results_element != None:
                 results_s = results_element.get_text()
-                # Remove non number chars
                 results_s = remove_non_num_chars(results_s)
                 results = int(results_s)
                 data[key].append(results)
@@ -85,7 +84,6 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                     results_element = soup.find(class_="job-count")
                     if results_element != None:
                         jobs_num_s = results_element.get_text()
-                        # Remove non number chars
                         jobs_num_s = remove_non_num_chars(jobs_num_s)
                         jobs_num_l = list(jobs_num_s)
                         remove = False
@@ -107,7 +105,6 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                         results_element = soup.find("b", {"data-testid": "job-count"})
                         if results_element != None:
                             jobs_num_s = results_element.get_text()
-                            # Remove non number chars
                             jobs_num_s = remove_non_num_chars(jobs_num_s)
                             jobs_num = int(jobs_num_s)
                             data[key].append(jobs_num)
@@ -124,7 +121,6 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
                                         jobs_num_element = div_element.find("span", class_="SWhIm")
                                         if jobs_num_element != None:
                                             jobs_num_s = jobs_num_element.get_text()
-                                            # Remove non number chars
                                             jobs_num_s = remove_non_num_chars(jobs_num_s)
                                             jobs_num = int(jobs_num_s)
                                             data[key].append(jobs_num)
