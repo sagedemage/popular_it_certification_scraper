@@ -1,3 +1,6 @@
 data/*.csv
 data/*.txt
 data/*.csv*
+data/positions/*.csv
+data/positions/*.txt
+data/positions/*.csv*
