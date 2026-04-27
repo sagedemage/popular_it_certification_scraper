@@ -157,7 +157,7 @@ def main():
             logger.info(f"Wrote the IT certification averages in the {cert_avg_file_path} file for {position}")
 
     driver.quit()
-    logger.info(f"Finished scraping the data on the popularity of IT certifications for the position: {position}")
+    logger.info(f"Finished scraping the data on the popularity of IT certifications by position")
 
 if __name__ == "__main__":
     main()
