@@ -112,7 +112,7 @@ def main():
             url_info = UrlInfo(url, "RTX")
             urls_by_cert[key].append(url_info)
 
-            url = f"https://www.lockheedmartinjobs.com/search-jobs/{search_query}"
+            url = f"https://www.lockheedmartinjobs.com/search-jobs/{search_query_encoded}"
             url_info = UrlInfo(url, "Lockheed Martin")
             urls_by_cert[key].append(url_info)
 
@@ -121,12 +121,12 @@ def main():
             url_info = UrlInfo(url, "McKesson")
             urls_by_cert[key].append(url_info)
 
-            url = f"https://jobs.thecignagroup.com/us/en/search-results?keywords={search_query}"
+            url = f"https://jobs.thecignagroup.com/us/en/search-results?keywords={search_query_encoded}"
             url_info = UrlInfo(url, "The Cigna Group")
             urls_by_cert[key].append(url_info)
 
             # URLs of Technology Companies
-            url = f"https://www.google.com/about/careers/applications/jobs/results?q={search_query}"
+            url = f"https://www.google.com/about/careers/applications/jobs/results?q={search_query_encoded}"
             url_info = UrlInfo(url, "Google")
             urls_by_cert[key].append(url_info)
 
