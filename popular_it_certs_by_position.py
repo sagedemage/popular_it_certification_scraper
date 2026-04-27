@@ -83,8 +83,6 @@ def main():
 
     for position in positions:
         for cert in certs:
-            #for position in positions:
-            #position_and_cert = f"{position} {cert}"
             data[cert] = []
             urls_by_cert[cert] = []
 
