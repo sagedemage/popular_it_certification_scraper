@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import math
 import re
+import pyautogui
 
 @dataclass
 class DataResult:
@@ -77,6 +78,13 @@ def scrap_html_content(html_content: str, data: Dict[str, List[int]], key: str, 
     data_result = DataResult(data, True)
     return data_result
 
+def solve_cloudflare_turnstitle(title: str):
+    """Solve Cloudflare Turnstile"""
+    if title == "Just a moment...":
+        time.sleep(10)
+        pyautogui.click(544, 433)
+        time.sleep(30)
+
 def main():
     options = webdriver.ChromeOptions()
 
@@ -115,25 +123,24 @@ def main():
     certs = [
         "Comptia Network+",
         "Comptia Security+",
-        "CCNA",
-        "Comptia Linux+",
-        "Comptia Server+"
+        "CCNA"
         ]
 
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
 
-    for cert in certs:
-        data[cert] = []
-        urls_by_cert[cert] = []
+    positions = ["Network Engineer", "Network Administrator", "Cybersecurity Engineer"]
 
-    position = "Network Engineer"
+    for cert in certs:
+        for position in positions:
+            position_and_cert = f"{position} {cert}"
+            data[position_and_cert] = []
+            urls_by_cert[position_and_cert] = []
 
     for key in urls_by_cert.keys():
-        search_query = f"{position} {key}"
-        search_query_encoded = quote(search_query)
+        search_query = quote(key)
 
-        url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query_encoded}"
+        url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query}"
         url_info = UrlInfo(url, "RTX")
         urls_by_cert[key].append(url_info)
 
@@ -156,7 +163,9 @@ def main():
 
             # Note: Selenium is great for getting dynamic HTML content generated from JavaScript
             driver.get(url)
-            time.sleep(30)
+            time.sleep(2)
+            title = driver.title
+            solve_cloudflare_turnstitle(title)
             html_content = driver.page_source
 
             data_result = scrap_html_content(html_content, data, key, logger, company_name)
@@ -171,25 +180,23 @@ def main():
 
     df = pd.DataFrame(data=data)
 
-    position_file_name = position.lower()
-    position_file_name = position_file_name.replace(" ", "_")
-    pop_certs_file_path = f"data/popularity_of_it_certifications_for_{position_file_name}.csv"
+    pop_certs_file_path = "data/popularity_of_it_certifications_by_position.csv"
     df.to_csv(pop_certs_file_path)
     logger.info(f"Wrote the scraped data to {pop_certs_file_path}")
 
     avgs = []
     avg_of_certs = {}
-    for cert in certs:
-        avg = df[cert].mean()
+    for key in urls_by_cert.keys():
+        avg = df[key].mean()
         avg = math.floor(avg)
         avgs.append(avg)
-        avg_of_certs[cert] = avg
+        avg_of_certs[key] = avg
 
     avgs = sorted(avgs, reverse=True)
 
-    cert_avg_file_path = f"data/popularity_cert_for_{position_file_name}.txt"
+    cert_avg_file_path = "data/popularity_cert_by_position.txt"
     with open(cert_avg_file_path, "w", encoding="utf-8") as f:
-        f.write(f"Position: {position}\n")
+        f.write(f"Certification Popularity by Position\n")
         for avg in avgs:
             for key in avg_of_certs.keys():
                 item = avg_of_certs[key]
