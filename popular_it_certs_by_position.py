@@ -81,81 +81,83 @@ def main():
     certs = config["popular_certs"]["certs"].split(",")
     positions = config["IT_positions"]["positions"].split(",")
 
-    for cert in certs:
-        for position in positions:
-            position_and_cert = f"{position} {cert}"
-            data[position_and_cert] = []
-            urls_by_cert[position_and_cert] = []
+    for position in positions:
+        for cert in certs:
+            data[cert] = []
+            urls_by_cert[cert] = []
 
-    for key in urls_by_cert.keys():
-        search_query = quote(key)
+        for key in urls_by_cert.keys():
+            search_query = f"{position} {key}"
+            search_query_encoded = quote(search_query)
 
-        url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query}"
-        url_info = UrlInfo(url, "RTX")
-        urls_by_cert[key].append(url_info)
+            url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query_encoded}"
+            url_info = UrlInfo(url, "RTX")
+            urls_by_cert[key].append(url_info)
 
-        url = f"https://careers.mckesson.com/en/search-jobs/{search_query}"
-        url_info = UrlInfo(url, "McKesson")
-        urls_by_cert[key].append(url_info)
+            url = f"https://careers.mckesson.com/en/search-jobs/{search_query_encoded}"
+            url_info = UrlInfo(url, "McKesson")
+            urls_by_cert[key].append(url_info)
 
-        url = f"https://apply.careers.microsoft.com/careers?query={search_query}"
-        url_info = UrlInfo(url, "Microsoft")
-        urls_by_cert[key].append(url_info)
+            url = f"https://apply.careers.microsoft.com/careers?query={search_query_encoded}"
+            url_info = UrlInfo(url, "Microsoft")
+            urls_by_cert[key].append(url_info)
 
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
 
-    for key in urls_by_cert.keys():
-        urls = urls_by_cert[key]
-        for url_info in urls:
-            url = url_info.url
-            company_name = url_info.company_name
+        for key in urls_by_cert.keys():
+            urls = urls_by_cert[key]
+            for url_info in urls:
+                url = url_info.url
+                company_name = url_info.company_name
 
-            # Note: Selenium is great for getting dynamic HTML content generated from JavaScript
-            driver.get(url)
-            time.sleep(2)
-            title = driver.title
-            solve_cloudflare_turnstitle(title)
-            html_content = driver.page_source
+                # Note: Selenium is great for getting dynamic HTML content generated from JavaScript
+                driver.get(url)
+                time.sleep(2)
+                title = driver.title
+                solve_cloudflare_turnstitle(title)
+                html_content = driver.page_source
 
-            data_result = scrap_html_content(html_content, data, key, logger, company_name)
-            if data_result.job_data_found == True:
-                data = data_result.data
-            else:
-                logger.error(f"Unable to get the results number from {url}")
-                driver.quit()
-                sys.exit(1)
+                data_result = scrap_html_content(html_content, data, key, logger, company_name)
+                if data_result.job_data_found == True:
+                    data = data_result.data
+                else:
+                    logger.error(f"Unable to get the results number from {url}")
+                    driver.quit()
+                    sys.exit(1)
+
+        df = pd.DataFrame(data=data)
+
+        position_file_name = position.lower()
+        position_file_name = position_file_name.replace(" ", "_")
+
+        pop_certs_file_path = f"data/positions/popularity_of_it_certifications_for_{position_file_name}.csv"
+        df.to_csv(pop_certs_file_path)
+        logger.info(f"Wrote the scraped data to {pop_certs_file_path}")
+
+        avgs = []
+        avg_of_certs = {}
+        for key in urls_by_cert.keys():
+            avg = df[key].mean()
+            avg = math.floor(avg)
+            avgs.append(avg)
+            avg_of_certs[key] = avg
+
+        avgs = sorted(avgs, reverse=True)
+
+        cert_avg_file_path = f"data/positions/popularity_cert_for_{position_file_name}.txt"
+        with open(cert_avg_file_path, "w", encoding="utf-8") as f:
+            f.write(f"Certification Popularity for {position}\n")
+            for avg in avgs:
+                for key in avg_of_certs.keys():
+                    item = avg_of_certs[key]
+                    if item == avg:
+                        f.write(f"Average for {key}: {avg}\n")
+                        break
+            logger.info(f"Wrote the IT certification averages in the {cert_avg_file_path} file for {position}")
 
     driver.quit()
-
-    df = pd.DataFrame(data=data)
-
-    pop_certs_file_path = "data/popularity_of_it_certifications_by_position.csv"
-    df.to_csv(pop_certs_file_path)
-    logger.info(f"Wrote the scraped data to {pop_certs_file_path}")
-
-    avgs = []
-    avg_of_certs = {}
-    for key in urls_by_cert.keys():
-        avg = df[key].mean()
-        avg = math.floor(avg)
-        avgs.append(avg)
-        avg_of_certs[key] = avg
-
-    avgs = sorted(avgs, reverse=True)
-
-    cert_avg_file_path = "data/popularity_cert_by_position.txt"
-    with open(cert_avg_file_path, "w", encoding="utf-8") as f:
-        f.write(f"Certification Popularity by Position\n")
-        for avg in avgs:
-            for key in avg_of_certs.keys():
-                item = avg_of_certs[key]
-                if item == avg:
-                    f.write(f"Average for {key}: {avg}\n")
-                    break
-        logger.info(f"Wrote the IT certification averages in the {cert_avg_file_path} file")
-
-    logger.info(f"Finished scraping the data on the popularity of IT certifications for the position: {position}")
+    logger.info(f"Finished scraping the data on the popularity of IT certifications by position")
 
 if __name__ == "__main__":
     main()
