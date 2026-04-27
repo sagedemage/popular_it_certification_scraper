@@ -4,30 +4,12 @@ import time
 import sys
 import logging
 from typing import Dict, List
-from dataclasses import dataclass
 from bs4 import BeautifulSoup
 import pandas as pd
 import math
 import re
-import pyautogui
-
-@dataclass
-class DataResult:
-    data: Dict[str, List[int]]
-    job_data_found: bool
-
-@dataclass
-class UrlInfo:
-    url: str
-    company_name: str
-
-def remove_non_num_chars(jobs_num_s: str):
-    """Remove non number characters"""
-    jobs_num_s = jobs_num_s.removesuffix("jobs")
-    jobs_num_s = jobs_num_s.replace(",", "")
-    jobs_num_s = jobs_num_s.replace("+", "")
-    jobs_num_s = jobs_num_s.strip()
-    return jobs_num_s
+import configparser
+from lib import DataResult, UrlInfo, remove_non_num_chars, solve_cloudflare_turnstitle, default_chrome_options
 
 def scrap_html_content(html_content: str, data: Dict[str, List[int]], key: str, logger: logging.Logger, company_name: str) -> DataResult:
     """Scrap HTML content for jobs data"""
@@ -78,40 +60,10 @@ def scrap_html_content(html_content: str, data: Dict[str, List[int]], key: str, 
     data_result = DataResult(data, True)
     return data_result
 
-def solve_cloudflare_turnstitle(title: str):
-    """Solve Cloudflare Turnstile"""
-    if title == "Just a moment...":
-        time.sleep(10)
-        pyautogui.click(544, 433)
-        time.sleep(30)
 
 def main():
-    options = webdriver.ChromeOptions()
-
-    # disable the automation-controlled features
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
-    options.add_argument(f'--user-agent={user_agent}')
-
-    # Set a standard window size to avoid detection by resolution fingerprinting
-    options.add_argument("--window-size=1920,1080")
-
-    # Disable features of Chrome
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--disable-popup-blocking")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--disable-dev-shm-usage")
-
-    # Disables the sandbox
-    options.add_argument("--no-sandbox")
-
-    # Remove automation switches
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-
-    # Remove automation extensions
-    options.add_experimental_option('useAutomationExtension', False)
+    user_agent = str("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36")
+    options = default_chrome_options(user_agent)
 
     driver = webdriver.Chrome(options=options)
 
@@ -120,16 +72,14 @@ def main():
         "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
     })
 
-    certs = [
-        "Comptia Network+",
-        "Comptia Security+",
-        "CCNA"
-        ]
+    config = configparser.ConfigParser()
+    config.read("config.ini")
 
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
 
-    positions = ["Network Engineer", "Network Administrator", "Cybersecurity Engineer"]
+    certs = config["popular_certs"]["certs"].split(",")
+    positions = config["IT_positions"]["positions"].split(",")
 
     for cert in certs:
         for position in positions:

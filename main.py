@@ -1,5 +1,4 @@
 from selenium import webdriver
-
 from bs4 import BeautifulSoup
 import re
 import time
@@ -7,29 +6,12 @@ import pandas as pd
 import math
 from urllib.parse import quote
 import sys
-from dataclasses import dataclass
 from typing import Dict, List
 import logging
+import configparser
+from lib import DataResult, UrlInfo, remove_non_num_chars, solve_cloudflare_turnstitle, default_chrome_options
 
-@dataclass
-class UrlInfo:
-    url: str
-    company_name: str
-
-@dataclass
-class DataResult:
-    data: Dict[str, List[str]]
-    job_data_found: bool
-
-def remove_non_num_chars(jobs_num_s: str):
-    """Remove non number characters"""
-    jobs_num_s = jobs_num_s.removesuffix("jobs")
-    jobs_num_s = jobs_num_s.replace(",", "")
-    jobs_num_s = jobs_num_s.replace("+", "")
-    jobs_num_s = jobs_num_s.strip()
-    return jobs_num_s
-
-def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, logger: logging.Logger, company_name: str) -> DataResult:
+def scrap_html_content(html_content: str, data: Dict[str, List[int]], key: str, logger: logging.Logger, company_name: str) -> DataResult:
     """Scrap HTML content for jobs data"""
     job_data_found = False
     soup = BeautifulSoup(html_content, "lxml")
@@ -134,32 +116,8 @@ def scrap_html_content(html_content: str, data: Dict[str, List[str]], key: str, 
     return data_result
 
 def main():
-    options = webdriver.ChromeOptions()
-
-    # disable the automation-controlled features
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
-    options.add_argument(f'--user-agent={user_agent}')
-
-    # Set a standard window size to avoid detection by resolution fingerprinting
-    options.add_argument("--window-size=1920,1080")
-
-    # Disable features of Chrome
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--disable-popup-blocking")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--disable-dev-shm-usage")
-
-    # Disables the sandbox
-    options.add_argument("--no-sandbox")
-
-    # Remove automation switches
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-
-    # Remove automation extensions
-    options.add_experimental_option('useAutomationExtension', False)
+    user_agent = str("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36")
+    options = default_chrome_options(user_agent)
 
     driver = webdriver.Chrome(options=options)
 
@@ -168,15 +126,12 @@ def main():
         "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
     })
 
-    certs = [
-        "Comptia Network+",
-        "Comptia Security+",
-        "CCNA",
-        "Comptia Linux+",
-        "Comptia Server+"
-        ]
+    config = configparser.ConfigParser()
+    config.read("config.ini")
 
-    data: Dict[str, List[str]] = {}
+    certs = config["popular_certs"]["certs"].split(",")
+
+    data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
 
     for cert in certs:
@@ -236,9 +191,9 @@ def main():
 
             # Note: Selenium is great for getting dynamic HTML content generated from JavaScript
             driver.get(url)
-
-            time.sleep(20)
-        
+            time.sleep(2)
+            title = driver.title
+            solve_cloudflare_turnstitle(title)
             html_content = driver.page_source
 
             data_result = scrap_html_content(html_content, data, key, logger, company_name)
