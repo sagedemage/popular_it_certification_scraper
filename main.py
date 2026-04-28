@@ -134,6 +134,23 @@ def main():
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
 
+    company_names = [
+        "RTX",
+        "Lockheed Martin",
+        "BAE Systems",
+        "CVS Health",
+        "McKesson",
+        "The Cigna Group",
+        "Google",
+        "Amazon",
+        "Microsoft"
+    ]
+
+    data["Companies"] = []
+
+    for company_name in company_names:
+        data["Companies"].append(company_name)
+
     for cert in certs:
         data[cert] = []
         urls_by_cert[cert] = []
@@ -143,41 +160,50 @@ def main():
 
         # URLs of Defense Companies
         url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query}"
-        url_info = UrlInfo(url, "RTX")
+        company_name = company_names[0]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
         url = f"https://www.lockheedmartinjobs.com/search-jobs/{search_query}"
-        url_info = UrlInfo(url, "Lockheed Martin")
+        company_name = company_names[1]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
         url = f"https://jobs.baesystems.com/global/en/search-results?keywords={search_query}"
-        url_info = UrlInfo(url, "BAE Systems")
+        company_name = company_names[2]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
         # URLs of Healthcare Companies
         url = f"https://jobs.cvshealth.com/us/en/search-results?keywords={search_query}"
-        url_info = UrlInfo(url, "CVS Health")
+        company_name = company_names[3]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
         url = f"https://careers.mckesson.com/en/search-jobs/{search_query}"
-        url_info = UrlInfo(url, "McKesson")
+        company_name = company_names[4]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
         url = f"https://jobs.thecignagroup.com/us/en/search-results?keywords={search_query}"
-        url_info = UrlInfo(url, "The Cigna Group")
+        company_name = company_names[5]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
         # URLs of Technology Companies
         url = f"https://www.google.com/about/careers/applications/jobs/results?q={search_query}"
-        url_info = UrlInfo(url, "Google")
+        company_name = company_names[6]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
         url = f"https://www.amazon.jobs/en/search?base_query={search_query}"
-        url_info = UrlInfo(url, "Amazon")
+        company_name = company_names[7]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
         url = f"https://apply.careers.microsoft.com/careers?query={search_query}"
-        url_info = UrlInfo(url, "Microsoft")
+        company_name = company_names[8]
+        url_info = UrlInfo(url, company_name)
         urls_by_cert[key].append(url_info)
 
     logging.basicConfig(level=logging.INFO)

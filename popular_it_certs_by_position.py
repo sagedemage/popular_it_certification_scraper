@@ -95,6 +95,20 @@ def main():
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
 
+    company_names = [
+        "RTX",
+        "Lockheed Martin",
+        "McKesson",
+        "The Cigna Group",
+        "Google",
+        "Microsoft"
+    ]
+
+    data["Companies"] = []
+
+    for company_name in company_names:
+        data["Companies"].append(company_name)
+
     certs = config["popular_certs"]["certs"].split(",")
     positions = config["IT_positions"]["positions"].split(",")
 
@@ -109,29 +123,35 @@ def main():
 
             # URLs of Defense Companies
             url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query_encoded}"
-            url_info = UrlInfo(url, "RTX")
+            company_name = company_names[0]
+            url_info = UrlInfo(url, company_name)
             urls_by_cert[key].append(url_info)
 
             url = f"https://www.lockheedmartinjobs.com/search-jobs/{search_query_encoded}"
-            url_info = UrlInfo(url, "Lockheed Martin")
+            company_name = company_names[1]
+            url_info = UrlInfo(url, company_name)
             urls_by_cert[key].append(url_info)
 
             # URLs of Healthcare Companies
             url = f"https://careers.mckesson.com/en/search-jobs/{search_query_encoded}"
-            url_info = UrlInfo(url, "McKesson")
+            company_name = company_names[2]
+            url_info = UrlInfo(url, company_name)
             urls_by_cert[key].append(url_info)
 
             url = f"https://jobs.thecignagroup.com/us/en/search-results?keywords={search_query_encoded}"
-            url_info = UrlInfo(url, "The Cigna Group")
+            company_name = company_names[3]
+            url_info = UrlInfo(url, company_name)
             urls_by_cert[key].append(url_info)
 
             # URLs of Technology Companies
             url = f"https://www.google.com/about/careers/applications/jobs/results?q={search_query_encoded}"
-            url_info = UrlInfo(url, "Google")
+            company_name = company_names[4]
+            url_info = UrlInfo(url, company_name)
             urls_by_cert[key].append(url_info)
 
             url = f"https://apply.careers.microsoft.com/careers?query={search_query_encoded}"
-            url_info = UrlInfo(url, "Microsoft")
+            company_name = company_names[5]
+            url_info = UrlInfo(url, company_name)
             urls_by_cert[key].append(url_info)
 
         logging.basicConfig(level=logging.INFO)
