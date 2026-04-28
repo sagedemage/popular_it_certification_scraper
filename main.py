@@ -16,8 +16,6 @@ def scrap_html_content(html_content: str, data: Dict[str, List[int]], key: str, 
     job_data_found = False
     soup = BeautifulSoup(html_content, "lxml")
 
-    # Cencora: num results
-
     # Check 1: Does the website contain the text "{number} results"
     pattern = re.compile(r'\d results', re.IGNORECASE)
     results_element = soup.find(string=pattern)
