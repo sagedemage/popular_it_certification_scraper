@@ -1,6 +1,4 @@
 from selenium import webdriver
-from bs4 import BeautifulSoup
-import re
 import time
 import pandas as pd
 import math
@@ -8,122 +6,8 @@ from urllib.parse import quote
 import sys
 from typing import Dict, List
 import logging
-import configparser
-from lib import DataResult, UrlInfo, remove_non_num_chars, solve_cloudflare_turnstitle, default_chrome_options
-
-def scrap_html_content(html_content: str, data: Dict[str, List[int]], key: str, logger: logging.Logger, company_name: str) -> DataResult:
-    """Scrap HTML content for jobs data"""
-    job_data_found = False
-    soup = BeautifulSoup(html_content, "lxml")
-
-    # Check 1: Does the website contain the text "{number} results"
-    pattern = re.compile(r'\d results', re.IGNORECASE)
-    results_element = soup.find(string=pattern)
-    if results_element != None:
-        results_element_text = results_element.get_text()
-        results_items = results_element_text.split(" ")
-        for i in range(len(results_items)-1):
-            result_item = results_items[i+1].lower()
-            result_item = result_item.replace("\n", "")
-            if result_item == "results":
-                results_s = results_items[i]
-                results_s = remove_non_num_chars(results_s)
-                results = int(results_s)
-                data[key].append(results)
-                job_data_found = True
-                logger.info(f"Added results number for {key} from {company_name}")
-                break
-    else:
-        # Check 2: Does the website contain the element of class "total-jobs"
-        results_element = soup.find(class_="total-jobs")
-        if results_element != None:
-            results_s = results_element.get_text()
-            results_s = remove_non_num_chars(results_s)
-            results = int(results_s)
-            data[key].append(results)
-            job_data_found = True
-            logger.info(f"Added results number for {key} from {company_name}")
-        else:
-            # Check 3: Does the website contain the element of class "result-count"
-            results_element = soup.find(class_="result-count")
-            if results_element != None:
-                results_s = results_element.get_text()
-                results_s = remove_non_num_chars(results_s)
-                results = int(results_s)
-                data[key].append(results)
-                job_data_found = True
-                logger.info(f"Added results number for {key} from {company_name}")
-            else:
-                # Check for no search results
-                search_empty_element = soup.find("div", class_="search-empty")
-                no_results_element = soup.find("div", {"ph-page-state": "no-results"})
-                if search_empty_element != None or no_results_element != None:
-                    data[key].append(0)
-                    job_data_found = True
-                    logger.info(f"Added results number for {key} from {company_name}")
-                else:
-                    # Check 4: Does the website contain the element of class "job-count"
-                    results_element = soup.find(class_="job-count")
-                    if results_element != None:
-                        jobs_num_s = results_element.get_text()
-                        jobs_num_s = remove_non_num_chars(jobs_num_s)
-                        jobs_num_l = list(jobs_num_s)
-                        remove = False
-                        for i in range(len(jobs_num_l)):
-                            if jobs_num_l[i] == "(":
-                                remove = True
-                            elif jobs_num_l[i] == ")":
-                                remove = False
-                                jobs_num_l[i] = ""
-                            if remove == True:
-                                jobs_num_l[i] = ""
-                        jobs_num_s = "".join(jobs_num_l)
-                        jobs_num = int(jobs_num_s)
-                        data[key].append(jobs_num)
-                        job_data_found = True
-                        logger.info(f"Added results number for {key} from {company_name}")
-                    else:
-                        # Check 5: Does the website contain the element of attribute, data-testid, that is equal to "job-count"
-                        results_element = soup.find("b", {"data-testid": "job-count"})
-                        if results_element != None:
-                            jobs_num_s = results_element.get_text()
-                            jobs_num_s = remove_non_num_chars(jobs_num_s)
-                            jobs_num = int(jobs_num_s)
-                            data[key].append(jobs_num)
-                            job_data_found = True
-                            logger.info(f"Added results number for {key} from {company_name}")
-                        else:
-                            # Check 6: Does the website contain the span element of class "search-context-button__pill-counter"
-                            results_element = soup.find("span", class_="search-context-button__pill-counter")
-                            if results_element != None:
-                                jobs_num_s = results_element.get_text()
-                                jobs_num_s = remove_non_num_chars(jobs_num_s)
-                                jobs_num = int(jobs_num_s)
-                                data[key].append(jobs_num)
-                                job_data_found = True
-                                logger.info(f"Added results number for {key} from {company_name}")
-                            else:
-                                # Check 7: Does the website contain the text "jobs matched" or "job matched".
-                                # If so, get the number of jobs from that tag.
-                                div_elements = soup.find_all("div")
-                                for div_element in div_elements:
-                                    if div_element != None:
-                                        text = div_element.get_text()
-                                        if "jobs matched" in text or "job matched" in text:
-                                            jobs_num_element = div_element.find("span", class_="SWhIm")
-                                            if jobs_num_element != None:
-                                                jobs_num_s = jobs_num_element.get_text()
-                                                jobs_num_s = remove_non_num_chars(jobs_num_s)
-                                                jobs_num = int(jobs_num_s)
-                                                data[key].append(jobs_num)
-                                                job_data_found = True
-                                                logger.info(f"Added results number for {key} from {company_name}")
-                                                break
-    if job_data_found == False:
-        data_result = DataResult(None, False)
-        return data_result
-    data_result = DataResult(data, True)
-    return data_result
+import json
+from lib import UrlInfo, solve_cloudflare_turnstitle, default_chrome_options, scrap_html_content
 
 def main():
     user_agent = str("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36")
@@ -136,32 +20,20 @@ def main():
         "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
     })
 
-    config = configparser.ConfigParser()
-    config.read("config.ini")
+    config: dict = {}
+    with open("config.json", "r") as f:
+        config = json.load(f)
 
-    certs = config["popular_certs"]["certs"].split(",")
+    certs = config["certs"]
+    career_site_urls = config["career_site_urls"]
 
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
 
-    company_names = [
-        "RTX",
-        "Lockheed Martin",
-        "BAE Systems",
-        "Leidos",
-        "CVS Health",
-        "McKesson",
-        "The Cigna Group",
-        "Cencora",
-        "Google",
-        "Amazon",
-        "Microsoft",
-        "Oracle"
-    ]
-
     data["Companies"] = []
 
-    for company_name in company_names:
+    for career_site_url in career_site_urls:
+        company_name = career_site_url["company_name"]
         data["Companies"].append(company_name)
 
     for cert in certs:
@@ -171,68 +43,11 @@ def main():
     for key in urls_by_cert.keys():
         search_query = quote(key)
 
-        # URLs of Defense Companies
-        url = f"https://careers.rtx.com/global/en/search-results?keywords={search_query}"
-        company_name = company_names[0]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://www.lockheedmartinjobs.com/search-jobs/{search_query}"
-        company_name = company_names[1]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://jobs.baesystems.com/global/en/search-results?keywords={search_query}"
-        company_name = company_names[2]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://careers.leidos.com/search/jobs?q={search_query}"
-        company_name = company_names[3]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        # URLs of Healthcare Companies
-        url = f"https://jobs.cvshealth.com/us/en/search-results?keywords={search_query}"
-        company_name = company_names[4]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://careers.mckesson.com/en/search-jobs/{search_query}"
-        company_name = company_names[5]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://jobs.thecignagroup.com/us/en/search-results?keywords={search_query}"
-        company_name = company_names[6]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://careers.cencora.com/us/en/search-results?keywords={search_query}"
-        company_name = company_names[7]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        # URLs of Technology Companies
-        url = f"https://www.google.com/about/careers/applications/jobs/results?q={search_query}"
-        company_name = company_names[8]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://www.amazon.jobs/en/search?base_query={search_query}"
-        company_name = company_names[9]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://apply.careers.microsoft.com/careers?query={search_query}"
-        company_name = company_names[10]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
-
-        url = f"https://careers.oracle.com/en/sites/jobsearch/jobs?keyword={search_query}"
-        company_name = company_names[11]
-        url_info = UrlInfo(url, company_name)
-        urls_by_cert[key].append(url_info)
+        for career_site_url in career_site_urls:
+            url = f"{career_site_url["url"]}{search_query}"
+            company_name = career_site_url["company_name"]
+            url_info = UrlInfo(url, company_name)
+            urls_by_cert[key].append(url_info)
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)

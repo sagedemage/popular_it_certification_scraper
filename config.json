@@ -1,0 +1,18 @@
+{
+    "certs": ["Comptia Network+", "Comptia Security+", "CCNA"],
+    "positions": ["Network Engineer", "Network Administrator", "Cybersecurity Engineer"],
+    "career_site_urls": [
+        {"url": "https://careers.rtx.com/global/en/search-results?keywords=", "company_name": "RTX"},
+        {"url": "https://www.lockheedmartinjobs.com/search-jobs/", "company_name": "Lockheed Martin"},
+        {"url": "https://jobs.baesystems.com/global/en/search-results?keywords=", "company_name": "BAE Systems"},
+        {"url": "https://careers.leidos.com/search/jobs?q=", "company_name": "Leidos"},
+        {"url": "https://jobs.cvshealth.com/us/en/search-results?keywords=", "company_name": "CVS Health"},
+        {"url": "https://careers.mckesson.com/en/search-jobs/", "company_name": "McKesson"},
+        {"url": "https://jobs.thecignagroup.com/us/en/search-results?keywords=", "company_name": "The Cigna Group"},
+        {"url": "https://careers.cencora.com/us/en/search-results?keywords=", "company_name": "Cencora"},
+        {"url": "https://www.google.com/about/careers/applications/jobs/results?q=", "company_name": "Google"},
+        {"url": "https://www.amazon.jobs/en/search?base_query=", "company_name": "Amazon"},
+        {"url": "https://apply.careers.microsoft.com/careers?query=", "company_name": "Microsoft"},
+        {"url": "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=", "company_name": "Oracle"}
+    ]
+}
