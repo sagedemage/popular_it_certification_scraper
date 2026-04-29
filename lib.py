@@ -5,6 +5,7 @@ import pyautogui
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import re
+import logging
 
 @dataclass
 class DataResult:
