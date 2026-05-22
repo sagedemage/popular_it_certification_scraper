@@ -4,3 +4,4 @@ data/*.csv*
 data/positions/*.csv
 data/positions/*.txt
 data/positions/*.csv*
+__pycache__/
