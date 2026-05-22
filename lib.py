@@ -20,8 +20,11 @@ class UrlInfo:
 def remove_non_num_chars(jobs_num_s: str):
     """Remove non number characters"""
     jobs_num_s = jobs_num_s.removesuffix("jobs")
+    jobs_num_s = jobs_num_s.removeprefix("all")
+    jobs_num_s = jobs_num_s.removeprefix("&nbsp")
     jobs_num_s = jobs_num_s.replace(",", "")
     jobs_num_s = jobs_num_s.replace("+", "")
+    jobs_num_s = jobs_num_s.replace(";", "")
     jobs_num_s = jobs_num_s.strip()
     return jobs_num_s
 
@@ -151,22 +154,37 @@ def scrap_html_content(html_content: str, data: Dict[str, List[int]], key: str, 
                                 job_data_found = True
                                 logger.info(f"Added results number for {key} from {company_name}")
                             else:
-                                # Check 7: Does the website contain the text "jobs matched" or "job matched".
-                                # If so, get the number of jobs from that tag.
-                                div_elements = soup.find_all("div")
-                                for div_element in div_elements:
-                                    if div_element != None:
-                                        text = div_element.get_text()
-                                        if "jobs matched" in text or "job matched" in text:
-                                            jobs_num_element = div_element.find("span", class_="SWhIm")
-                                            if jobs_num_element != None:
-                                                jobs_num_s = jobs_num_element.get_text()
-                                                jobs_num_s = remove_non_num_chars(jobs_num_s)
-                                                jobs_num = int(jobs_num_s)
-                                                data[key].append(jobs_num)
-                                                job_data_found = True
-                                                logger.info(f"Added results number for {key} from {company_name}")
-                                                break
+                                # Check 7: Does the website contain the div element of class "table-counts"
+                                results_element = soup.find("div", class_="table-counts")
+                                if results_element != None:
+                                    b_elements = results_element.find_all("b")
+                                    jobs_num_s = ""
+                                    if len(b_elements) > 1:
+                                        jobs_num_s = b_elements[1].get_text()
+                                    elif len(b_elements) == 1:
+                                        jobs_num_s = b_elements[0].get_text()
+                                    jobs_num_s = remove_non_num_chars(jobs_num_s)
+                                    jobs_num = int(jobs_num_s)
+                                    data[key].append(jobs_num)
+                                    job_data_found = True
+                                    logger.info(f"Added results number for {key} from {company_name}")
+                                else:
+                                    # Check 8: Does the website contain the text "jobs matched" or "job matched".
+                                    # If so, get the number of jobs from that tag.
+                                    div_elements = soup.find_all("div")
+                                    for div_element in div_elements:
+                                        if div_element != None:
+                                            text = div_element.get_text()
+                                            if "jobs matched" in text or "job matched" in text:
+                                                jobs_num_element = div_element.find("span", class_="SWhIm")
+                                                if jobs_num_element != None:
+                                                    jobs_num_s = jobs_num_element.get_text()
+                                                    jobs_num_s = remove_non_num_chars(jobs_num_s)
+                                                    jobs_num = int(jobs_num_s)
+                                                    data[key].append(jobs_num)
+                                                    job_data_found = True
+                                                    logger.info(f"Added results number for {key} from {company_name}")
+                                                    break
     if job_data_found == False:
         data_result = DataResult(None, False)
         return data_result
