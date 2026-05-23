@@ -6,11 +6,13 @@ from urllib.parse import quote
 import sys
 from typing import Dict, List
 import logging
-import json
-from lib import UrlInfo, solve_cloudflare_turnstitle, default_chrome_options, scrap_html_content
+import json5
+from lib import UrlInfo, solve_cloudflare_turnstitle, default_chrome_options, scrap_html_content, get_chrome_browser_version
 
 def main():
-    user_agent = str("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36")
+    chrome_browser_version = get_chrome_browser_version()
+
+    user_agent = str(f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_browser_version} Safari/537.36")
     options = default_chrome_options(user_agent)
 
     driver = webdriver.Chrome(options=options)
@@ -21,11 +23,11 @@ def main():
     })
 
     config: dict = {}
-    with open("config.json", "r") as f:
-        config = json.load(f)
+    with open("config.json5", "r") as f:
+        config = json5.load(f)
 
     certs = config["certs"]
-    career_site_urls = config["career_site_urls"]
+    career_site_urls = config["defense_career_site_urls"] + config["healthcare_career_site_urls"] + config["technology_career_site_urls"]
 
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}

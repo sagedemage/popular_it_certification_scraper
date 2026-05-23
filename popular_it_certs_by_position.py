@@ -6,11 +6,13 @@ import logging
 from typing import Dict, List
 import pandas as pd
 import math
-import json
-from lib import UrlInfo, solve_cloudflare_turnstitle, default_chrome_options, scrap_html_content
+import json5
+from lib import UrlInfo, solve_cloudflare_turnstitle, default_chrome_options, scrap_html_content, get_chrome_browser_version
 
 def main():
-    user_agent = str("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36")
+    chrome_browser_version = get_chrome_browser_version()
+
+    user_agent = str(f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_browser_version} Safari/537.36")
     options = default_chrome_options(user_agent)
 
     driver = webdriver.Chrome(options=options)
@@ -21,15 +23,18 @@ def main():
     })
 
     config: dict = {}
-    with open("config.json", "r") as f:
-        config = json.load(f)
+    with open("config.json5", "r") as f:
+        config = json5.load(f)
 
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
 
     certs = config["certs"]
     positions = config["positions"]
-    career_site_urls = config["career_site_urls"]
+    defense_urls_half_length = int(len(config["defense_career_site_urls"])/2)
+    healthcare_urls_half_length = int(len(config["healthcare_career_site_urls"])/2)
+    technology_urls_half_length = int(len(config["technology_career_site_urls"])/2)
+    career_site_urls = config["defense_career_site_urls"][0:defense_urls_half_length] + config["healthcare_career_site_urls"][0:healthcare_urls_half_length] + config["technology_career_site_urls"][0:technology_urls_half_length]
 
     data["Companies"] = []
 
