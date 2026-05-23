@@ -6,6 +6,7 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import re
 import logging
+import subprocess
 
 @dataclass
 class DataResult:
@@ -190,3 +191,12 @@ def scrap_html_content(html_content: str, data: Dict[str, List[int]], key: str, 
         return data_result
     data_result = DataResult(data, True)
     return data_result
+
+def get_chrome_browser_version():
+    cmd = subprocess.run(["powershell.exe", "(Get-Item \"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\").VersionInfo.FileVersion"], capture_output=True, text=True)
+    stdout = cmd.stdout
+    stdout = stdout.strip()
+    version_elements = stdout.split(".")
+    major_version = version_elements[0]
+    chrome_browser_version = f"{major_version}.0.0.0"
+    return chrome_browser_version
