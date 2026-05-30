@@ -1,5 +1,5 @@
 {
-    "certs": ["Comptia Network+", "Comptia Security+", "CCNA"],
+    "certs": ["Comptia Network+", "CCNA", "Comptia Security+"],
     "positions": ["Network Engineer", "Network Administrator", "Cybersecurity Engineer"],
     "defense_career_site_urls": [
         {"url": "https://careers.rtx.com/global/en/search-results?keywords=", "company_name": "RTX"},
