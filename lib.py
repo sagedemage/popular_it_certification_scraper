@@ -32,9 +32,8 @@ def remove_non_num_chars(jobs_num_s: str):
 def solve_cloudflare_turnstitle(title: str):
     """Solve Cloudflare Turnstile"""
     if title == "Just a moment...":
-        time.sleep(10)
         pyautogui.click(544, 433)
-        time.sleep(30)
+        time.sleep(10)
 
 def default_chrome_options(user_agent: str) -> webdriver.ChromeOptions:
     options = webdriver.ChromeOptions()
