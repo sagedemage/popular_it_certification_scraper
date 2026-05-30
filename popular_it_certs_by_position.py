@@ -32,9 +32,8 @@ def main():
     certs = config["certs"]
     positions = config["positions"]
     defense_urls_half_length = int(len(config["defense_career_site_urls"])/2)
-    healthcare_urls_half_length = int(len(config["healthcare_career_site_urls"])/2)
     technology_urls_half_length = int(len(config["technology_career_site_urls"])/2)
-    career_site_urls = config["defense_career_site_urls"][0:defense_urls_half_length] + config["healthcare_career_site_urls"][0:healthcare_urls_half_length] + config["technology_career_site_urls"][0:technology_urls_half_length]
+    career_site_urls = config["defense_career_site_urls"][0:defense_urls_half_length] + config["technology_career_site_urls"][0:technology_urls_half_length]
 
     data["Companies"] = []
 
@@ -68,7 +67,7 @@ def main():
 
                 # Note: Selenium is great for getting dynamic HTML content generated from JavaScript
                 driver.get(url)
-                time.sleep(2)
+                time.sleep(3)
                 title = driver.title
                 solve_cloudflare_turnstitle(title)
                 html_content = driver.page_source

@@ -27,7 +27,7 @@ def main():
         config = json5.load(f)
 
     certs = config["certs"]
-    career_site_urls = config["defense_career_site_urls"] + config["healthcare_career_site_urls"] + config["technology_career_site_urls"]
+    career_site_urls = config["defense_career_site_urls"] + config["technology_career_site_urls"]
 
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
@@ -62,7 +62,7 @@ def main():
 
             # Note: Selenium is great for getting dynamic HTML content generated from JavaScript
             driver.get(url)
-            time.sleep(2)
+            time.sleep(3)
             title = driver.title
             solve_cloudflare_turnstitle(title)
             html_content = driver.page_source
