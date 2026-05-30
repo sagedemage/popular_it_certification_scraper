@@ -32,8 +32,7 @@ def main():
     certs = config["certs"]
     positions = config["positions"]
     defense_urls_half_length = int(len(config["defense_career_site_urls"])/2)
-    technology_urls_half_length = int(len(config["technology_career_site_urls"])/2)
-    career_site_urls = config["defense_career_site_urls"][0:defense_urls_half_length] + config["technology_career_site_urls"][0:technology_urls_half_length]
+    career_site_urls = config["defense_career_site_urls"][0:defense_urls_half_length]
 
     data["Companies"] = []
 
