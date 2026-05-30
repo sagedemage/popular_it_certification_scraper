@@ -27,7 +27,7 @@ def main():
         config = json5.load(f)
 
     certs = config["certs"]
-    career_site_urls = config["defense_career_site_urls"] + config["technology_career_site_urls"]
+    career_site_urls = config["defense_career_site_urls"]
 
     data: Dict[str, List[int]] = {}
     urls_by_cert: Dict[str, List[UrlInfo]] = {}
