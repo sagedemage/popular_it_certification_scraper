@@ -4,6 +4,8 @@
     "defense_career_site_urls": [
         {"url": "https://careers.rtx.com/global/en/search-results?keywords=", "company_name": "RTX"},
         {"url": "https://www.lockheedmartinjobs.com/search-jobs/", "company_name": "Lockheed Martin"},
+        {"url": "https://www.gdit.com/careers/search/?q=", "company_name": "GDIT"},
+        {"url": "https://jobs.northropgrumman.com/careers?query=", "company_name": "Northrop Grumman"},
         {"url": "https://jobs.baesystems.com/global/en/search-results?keywords=", "company_name": "BAE Systems"},
         {"url": "https://careers.leidos.com/search/jobs?q=", "company_name": "Leidos"},
     ]
