@@ -7,7 +7,7 @@ import sys
 from typing import Dict, List
 import logging
 import json5
-from lib import UrlInfo, solve_cloudflare_turnstitle, default_chrome_options, scrap_html_content, get_chrome_browser_version
+from lib import UrlInfo, default_chrome_options, scrap_html_content, get_chrome_browser_version
 
 def main():
     chrome_browser_version = get_chrome_browser_version()
@@ -16,11 +16,6 @@ def main():
     options = default_chrome_options(user_agent)
 
     driver = webdriver.Chrome(options=options)
-
-    # Remove webdriver property via JS
-    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-        "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-    })
 
     config: dict = {}
     with open("config.json5", "r") as f:
@@ -64,7 +59,9 @@ def main():
             driver.get(url)
             time.sleep(3)
             title = driver.title
-            solve_cloudflare_turnstitle(title)
+            if title == "Just a moment...":
+                time.sleep(10)
+
             html_content = driver.page_source
 
             data_result = scrap_html_content(html_content, data, key, logger, company_name)

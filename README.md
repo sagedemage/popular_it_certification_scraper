@@ -20,3 +20,6 @@ Check for dependency issues
 ```
 poetry run deptry .
 ```
+
+This website is useful to determine if the browser is avoiding anti-bot detection:
+- https://bot.sannysoft.com
